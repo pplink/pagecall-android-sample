@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.content.Context;
 
 import android.Manifest;
+import android.util.Log;
 import android.view.View;
 
 import android.support.v4.app.ActivityCompat;
@@ -31,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private static final String ENTRY_URL = "https://172.30.1.15:5000";
+    private static final String ENTRY_URL = "https://172.30.1.16:5000";
 
     private WebView mWebView;
 
@@ -77,11 +78,8 @@ public class MainActivity extends AppCompatActivity {
         mWebView.loadUrl(ENTRY_URL);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
-
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
-
-                // getActivity().
                 MainActivity.this.runOnUiThread(new Runnable() {
                     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
                     @Override
@@ -89,6 +87,12 @@ public class MainActivity extends AppCompatActivity {
                         request.grant(request.getResources());
                     }
                 });
+            }
+
+            @Override
+            public void onCloseWindow(WebView window) {
+                super.onCloseWindow(mWebView);
+                Log.d(TAG, "Window close");
             }
         });
     }
