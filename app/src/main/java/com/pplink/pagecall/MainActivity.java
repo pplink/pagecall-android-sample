@@ -1,9 +1,14 @@
 package com.pplink.pagecall;
 
+import im.delight.android.webview.AdvancedWebView;
+
 import android.annotation.TargetApi;
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.app.AlertDialog;
-
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Build;
 
@@ -17,7 +22,6 @@ import android.view.View;
 
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.annotation.NonNull;
 
 import android.webkit.WebChromeClient;
@@ -26,25 +30,25 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.PermissionRequest;
 import android.webkit.SslErrorHandler;
+import android.widget.Toast;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity implements AdvancedWebView.Listener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String ENTRY_URL = "https://pplink.net/call/test_android_0527?app=pagecall-for-jurung";
+    private static final int REQUEST_PERMISSIONS = 1888;
 
-    private static final String ENTRY_URL = "https://172.30.1.16:5000";
-
-    private WebView mWebView;
+    private AdvancedWebView mWebView;
 
     final Context context = this;
-
-    private static final int REQUEST_PERMISSIONS = 1888;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mWebView = findViewById(R.id.webview);
         checkForAndAskForPermissions();
     }
 
@@ -71,9 +75,77 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("NewApi")
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mWebView.onResume();
+        // ...
+    }
+
+    @SuppressLint("NewApi")
+    @Override
+    protected void onPause() {
+        mWebView.onPause();
+        // ...
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mWebView.onDestroy();
+        // ...
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        mWebView.onActivityResult(requestCode, resultCode, intent);
+        // ...
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!mWebView.onBackPressed()) { return; }
+        // ...
+        super.onBackPressed();
+    }
+
+    @Override
+    public void onPageStarted(String url, Bitmap favicon) {
+        mWebView.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void onPageFinished(String url) {
+        mWebView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onPageError(int errorCode, String description, String failingUrl) {
+        Toast.makeText(MainActivity.this, "onPageError(errorCode = "+errorCode+",  description = "+description+",  failingUrl = "+failingUrl+")", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onDownloadRequested(String url, String suggestedFilename, String mimeType, long contentLength, String contentDisposition, String userAgent) {
+        Toast.makeText(MainActivity.this, "onDownloadRequested(url = "+url+",  suggestedFilename = "+suggestedFilename+",  mimeType = "+mimeType+",  contentLength = "+contentLength+",  contentDisposition = "+contentDisposition+",  userAgent = "+userAgent+")", Toast.LENGTH_LONG).show();
+
+		/*if (AdvancedWebView.handleDownload(this, url, suggestedFilename)) {
+			// download successfully handled
+		}
+		else {
+			// download couldn't be handled because user has disabled download manager app on the device
+		}*/
+    }
+
+    @Override
+    public void onExternalPageRequest(String url) {
+        Toast.makeText(MainActivity.this, "onExternalPageRequest(url = "+url+")", Toast.LENGTH_SHORT).show();
+    }
+
     private void createWebView() {
 
-        mWebView = (WebView) findViewById(R.id.activity_main_webview);
         setUpWebViewDefaults(mWebView);
         mWebView.loadUrl(ENTRY_URL);
 
@@ -120,8 +192,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setUpWebViewDefaults(WebView webView) {
+    private void setUpWebViewDefaults(AdvancedWebView webView) {
 
+        // settings
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
 
@@ -142,8 +215,34 @@ public class MainActivity extends AppCompatActivity {
             WebView.setWebContentsDebuggingEnabled(true);
         }
 
+        // set webView default
+        webView.setListener(this, this);
+        webView.setGeolocationEnabled(false);
+        webView.setMixedContentAllowed(true);
+        webView.setCookiesEnabled(true);
+        webView.setThirdPartyCookiesEnabled(true);
+        webView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                Toast.makeText(MainActivity.this, "Finished loading", Toast.LENGTH_SHORT).show();
+            }
+
+        });
+        webView.setWebChromeClient(new WebChromeClient() {
+
+            @Override
+            public void onReceivedTitle(WebView view, String title) {
+                super.onReceivedTitle(view, title);
+                Toast.makeText(MainActivity.this, title, Toast.LENGTH_SHORT).show();
+            }
+
+        });
+        webView.addHttpHeader("X-Requested-With", "");
+
         webView.clearCache(true);
         webView.clearHistory();
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onReceivedSslError(WebView view, final SslErrorHandler handler, SslError error) {
