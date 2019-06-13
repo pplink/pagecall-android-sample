@@ -36,7 +36,8 @@ import android.widget.Toast;
 public class MainActivity extends Activity implements AdvancedWebView.Listener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final String ENTRY_URL = "https://pplink.net/call/test_android_0527?app=pagecall-for-jurung";
+    //private static final String ENTRY_URL = "https://pplink.net/call/test_android_0527?app=pagecall-for-jurung";
+    private static final String ENTRY_URL = "https://10.0.1.38:5000";
     private static final int REQUEST_PERMISSIONS = 1888;
 
     private AdvancedWebView mWebView;
